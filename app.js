@@ -18,6 +18,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Hello World!'
+  });
+});
+
 // set up routes
 app.use('/users', userRouter);
 app.use('/favorites', favoritesRouter);
