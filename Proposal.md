@@ -1,0 +1,2 @@
+Trello Board Link: https://trello.com/b/UrxWixT7/dicciapp
+link to front end wireframe: https://www.figma.com/file/d4NHfqmfPaqeh9CzCfYGVj/DicciApp?type=design&node-id=0-1&mode=design&t=PC9wVvCNpmQkNptr-0
