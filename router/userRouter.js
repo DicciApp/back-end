@@ -1,18 +1,16 @@
 import Express from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { UserModel } from "../models/index.js";
+import userModel from "../models/userModel.js";
 
 
 const router = Express.Router();
 // login routes
 router.post('/login', async (req, res) => {
-
 	try {
-
 		// here we are resqueting email and password for the user to put 
 		const { email, password } = req.body
-		const user = await UserModel.findOne({ email });
+		const user = await userModel.findOne({ email });
 		// here we are checking that the email and password matches the ones in the data base
 		if (!user) {
 			return res.status(401).json({
@@ -21,11 +19,13 @@ router.post('/login', async (req, res) => {
 			})
 		}
 
-		if (user.password === password) {
+		const veryPassword =  bcrypt.compareSync(password, user.password)
+		
+		if (veryPassword) {
 			const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "2d" })
 			res.json({
 				message: "user logged in successfully",
-				token
+				token,
 			})
 
 		} else {
@@ -40,11 +40,7 @@ router.post('/login', async (req, res) => {
 			error: true,
 			message: "Internal server error"
 		})
-
 	}
-
-
-
 })
 
 // logout routes
@@ -63,22 +59,59 @@ router.post('/logout', async (req, res) => {
 
 // signup or register routes
 router.post("/signup", async (req, res) => {
-
 	try {
 		const { fullName, email, password } = req.body
 
-		const existingEmail = await UserModel.findOne({ email: email });
+		const existingEmail = await userModel.findOne({ email: email });
 		if (existingEmail) {
-			return res.status(400).json({ error: 'email already exist' })
+			res.status(400).json({
+				data: null,
+				message: 'user already exist'
+			})
 		}
+
+		const salt = await bcrypt.genSalt(10)
+
+		// here we are hashing the password
+		const hashedPassword = await bcrypt.hash(password, salt)
+
 		// here we are creating a new user with the data received
-		const user = new UserModel({ fullName, email, password })
+		const user = new userModel({ fullName, email, password: hashedPassword })
+
 		// we are saving the new useer in the data base
 		await user.save()
 
-		res.json({ message: 'User registered succefully' });
+		const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "2d" })
+
+		res.json({
+			token,
+			message: 'User registered succefully'
+		})
+		
 	} catch (error) {
-		console.error('Error registering user', error)
+		res.json({
+			token: null,
+			message: error.toString()
+		})
+	}
+})
+
+
+router.get("/", async (req, res) => {
+	try {
+		const { token } = req.headers
+		const sid = jwt.decode(token)
+		const userId = sid["id"]
+
+		console.log(userId);
+
+		const users = await userModel.find({ _id: "66154cded61591637b7619b3" })
+
+		console.log(users);
+
+		res.json({ users })
+	} catch (error) {
+		res.status(500).json({ message: 'error getting users' })
 	}
 })
 export default router

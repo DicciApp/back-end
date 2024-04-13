@@ -38,19 +38,54 @@ router.post('/', async (req, res) => {
 	}
 })
 
-router.post('/delete', async (req, res) => {
-	const { userId, word } = req.body;
+router.delete('/:word', async (req, res) => {
+	const { token } = req.headers
+	const sid = jwt.decode(token)
+	const userId = sid["id"]
 
 	// here we are using await to first find that word that matches with userid and word 
 	try {
-		const result = await favoriteModel.findOneAndDelete({ userId, word })
+		const result = await favoriteModel.findOneAndDelete({ userId, word: req.params.word }, { _id: 1 })
 		if (result) {
-			res.status(200).json({ message: 'word removed from favorites succefully' })
+			res.status(200).json({ data: result })
 		} else {
-			res.status(404).json({ message: 'word not found' })
+			res.status(404).json({
+				data: null,
+			})
 		}
 	} catch (error) {
 		res.status(500).json({ message: 'error removing word' })
+	}
+})
+
+
+router.get('/:word', async (req, res) => {
+	try {
+		const { token } = req.headers
+		const sid = jwt.decode(token)
+		const userId = sid["id"]
+		const favorites = await favoriteModel.findOne({ word: req.params.word, userId }, { _id: 1 })
+
+		res.json(favorites)
+	} catch (error) {
+		res.status(500).json({ message: 'error getting favorites' })
+	}
+})
+
+router.get('/', async (req, res) => {
+	try {
+		const { token } = req.headers
+		const sid = jwt.decode(token)
+		const userId = sid["id"]
+		const favorites = await favoriteModel.find({ userId })
+
+		res.json(favorites)
+
+	} catch (error) {
+		res.status(500).json({
+			error: error.toString(),
+			message: 'error getting favorites'
+		})
 	}
 })
 
