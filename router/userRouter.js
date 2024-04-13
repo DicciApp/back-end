@@ -22,7 +22,7 @@ router.post('/login', async (req, res) => {
 		}
 
 		if (user.password === password) {
-			const token = jwt.sign({ user }, process.env.JWT_SECRET, { expiresIn: "2d" })
+			const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "2d" })
 			res.json({
 				message: "user logged in successfully",
 				token

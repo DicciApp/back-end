@@ -9,24 +9,30 @@ router.post('/', async (req, res) => {
 	try {
 		const { token, word } = req.body;
 		const sid = jwt.decode(token)
-		const userId = sid.user["_id"]
+		const userId = sid["id"]
 
 		const existingFavorite = await favoriteModel.findOne({ userId, word })
-		if (existingFavorite) {
-			res.status(400).json({
-				data: existingFavorite,
+
+		if (!!existingFavorite) {
+			res.json({
+				error: true,
 				message: "word already in favorites"
 			})
+
+		} else {
+			const newFavorite = new favoriteModel({ userId, word });
+			await newFavorite.save();
+
+			res.json({
+				error: false,
+				message: 'Word added to favorites successfully',
+				newFavorite
+			});
 		}
-
-		const newFavorite = new favoriteModel({ userId, word });
-		await newFavorite.save();
-
-		res.status(201).json({ message: 'Word added to favorites successfully', newFavorite });
 
 	} catch (error) {
 		res.status(500).json({
-			error,
+			error: error.toString(),
 			message: "error adding word to favorite"
 		})
 	}
